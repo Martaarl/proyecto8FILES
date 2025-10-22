@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node": "^25.0.0",
+    "vite": "^7.1.10",
+    "vitelatest": "^1.0.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "devDependencies": {
+    "bcrypt": "^6.0.0",
+    "nodemon": "^3.1.10"
+  }
+}
