@@ -10,7 +10,7 @@ const usersSchema = new mongoose.Schema({
         enum: ["admin", "user"], 
         default: "user",
     }, 
-    favoriteAlbums: [{ type: mongoose.Types.ObjectId, ref: "Album"}]
+    favoritePlaces: [{ type: mongoose.Types.ObjectId, ref: "Place"}]
 }, {
     timestamps: true, 
     collection: "users"

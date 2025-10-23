@@ -1,11 +1,12 @@
 const { upload } = require("../../middlewares/multer");
-const { getPlaces, postPlaces, deletePlace, getPlacesById } = require("../controllers/places");
+const { getPlaces, postPlaces, deletePlace, getPlacesById, putPlaces } = require("../controllers/places");
 
 const placesRouter = require("express").Router();
 
 placesRouter.get("/", getPlaces);
 placesRouter.get("/:id", getPlacesById)
 placesRouter.post("/", upload.single("img"), postPlaces);
+placesRouter.put("/:id", upload.single("img"), putPlaces);
 placesRouter.delete("/:id", deletePlace);
 
 
