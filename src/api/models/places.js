@@ -7,8 +7,8 @@ const placesSchema = new mongoose.Schema({
     url: { type: String, required: true }
     }, 
     name: {type: String, required: true}, 
-    date: {type: String, required: true}, // no he puesto Date porque quiero que sea tipo Summer25 
-   // creator: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
+    date: {type: Date, required: true}, 
+    author: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
 },
 {
     timestamps: true, 
