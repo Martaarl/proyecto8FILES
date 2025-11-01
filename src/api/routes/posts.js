@@ -7,7 +7,7 @@ const postsRouter = require("express").Router();
 postsRouter.get("/", getPosts);
 postsRouter.get("/:id", getPostById);
 postsRouter.post("/", upload.single("image"), createPost);
-postsRouter.put("/:id", updatePost);
+postsRouter.put("/:id", upload.single("image"), updatePost);
 postsRouter.delete("/:id", deletePost)
 
 

@@ -5,9 +5,10 @@ const { type } = require("os");
 const postSchema = new mongoose.Schema({
     title: {type: String, required: true},
     content: {type: String, required: true},
-    image: {type: String, url: String}, 
-    author: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true}, 
-    userPlace: [
+    image: {type: String}, 
+    //author: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
+    place: {type: mongoose.Schema.Types.ObjectId, ref: "Place"}, 
+   /* userPlace: [
         {
             user:{type: mongoose.Schema.Types.ObjectId, ref: "User"},
             place: {type: mongoose.Schema.Types.ObjectId, ref: "Place"},
@@ -15,7 +16,7 @@ const postSchema = new mongoose.Schema({
             comment: {type: String},
             createdAt: {type: Date, default: Date.now}
         }
-    ]
+    ]*/
 },{
     timestamps:true,
     collection: "posts"

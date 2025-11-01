@@ -1,4 +1,7 @@
 const cloudinary = require("cloudinary");
+const CloudinaryStorage = require("multer-storage-cloudinary");
+const multer = require ("multer");
+const mongoose = require("mongoose");
 const Posts = require("../models/posts");
 const Place = require("../models/places");
 
@@ -19,8 +22,12 @@ const getPosts = async (req, res, next) => {
 const getPostById = async (req, res, next) => {
     try {
         const {id} = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "ID no válido" });
+        }
+
         const post = await Posts.findById(id)
-        .populate("author", "name")
+        //.populate("author", "name")
         .populate("place", "name img")
         
         if (!post) {
@@ -29,17 +36,17 @@ const getPostById = async (req, res, next) => {
 
         return res.status(200).json(post);
     } catch (error) {
-        return res.status(400).json({error: "Error al obtener este post"})
+        return res.status(400).json({error: "Error al obtener este post", details: error.message})
     }
 }
 
 const createPost = async (req, res, next) => {
     try {
     
-    const {title, content, author, place} = req.body;
+    const {title, content,/* author,*/ place} = req.body;
 
-    if (!title || !content || !author || !place) {
-        return res.status(400)({error: "Faltan campos obligatorios"})
+    if (!title || !content || /*!author ||*/ !place) {
+        return res.status(400).json({error: "Faltan campos obligatorios"})
     }
 
     const placeExists = await Place.findById(place);
@@ -55,7 +62,8 @@ const createPost = async (req, res, next) => {
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
      } catch (error) {
-        return res.status(500).json({error: "Error creando el post"});
+        console.log(error);
+        return res.status(500).json({error: "Error creando el post", details: error.message});
     }
 }
 
@@ -66,6 +74,8 @@ const updatePost = async (req, res, next) => {
         const updateData = {...req.body};
       
         if (req.file) {
+            console.log("Archivo recibido:", req.file);
+
             updateData.image = req.file.path;
         }
        const updatedPost = await Posts.findByIdAndUpdate(id, updateData, {new: true, runValidators: true});
@@ -76,7 +86,8 @@ const updatePost = async (req, res, next) => {
 
        return res.status(200).json(updatedPost);
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el post"})
+        console.log(error);
+        return res.status(500).json({error: "Error al actualizar el post", details: error.message})
     }
 }
 
@@ -91,7 +102,8 @@ const deletePost = async (req, res, next) => {
         }
         return res.status(200).json({message: "Post eliminado con éxito"})
     } catch (error) {
-        return res.status(500).json({error: "Error al eliminar el post"})
+        console.log(error);
+        return res.status(500).json({error: "Error al eliminar el post", details: error.message})
     }
 }
 
