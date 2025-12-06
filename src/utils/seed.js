@@ -50,19 +50,24 @@ const seedData = async () => {
             if (!place) {
                 console.log(`No se encontró lugar para el post "${post.title}"`)
             }
-            await Posts.create({
-                ...post, 
+
+            const newPost = {
+                title: post.title,
+                content: post.content,
+                image: post.image,
                 place: place._id,
                 author: new mongoose.Types.ObjectId()
-            })
+            }
+            //mongo no es capaz de añadir aquí abajo nada al esquema?
+            await Posts.create(newPost);
         }
         
     } catch (error) {
-        console.log(error)
+        console.log("Error en la semilla", error)
     }
 
     finally {
-        mongoose.disconnect()
+        mongoose.disconnect();
     }
 }
 
