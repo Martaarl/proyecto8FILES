@@ -1,6 +1,6 @@
-const cloudinary = require("cloudinary");
-const CloudinaryStorage = require("multer-storage-cloudinary");
-const multer = require ("multer");
+const cloudinary = require("cloudinary").v2;
+//const CloudinaryStorage = require("multer-storage-cloudinary");
+//const multer = require ("multer");
 const mongoose = require("mongoose");
 const Posts = require("../models/posts");
 const Place = require("../models/places");
@@ -10,12 +10,12 @@ const getPosts = async (req, res, next) => {
         const posts =  await Posts.find();
 
         if (posts.length === 0) {
-            return res.status(404).json({error: "no se han encontrado posts acerca de esto"})
+            return res.status(200).json(posts)
         }
 
         return res.status(200).json(posts)
     } catch (error) {
-        return res.status(400).json("Error obteniendo posts")
+        return res.status(500).json({error: "Error obteniendo posts", details: error.message})
     }
 }
 
@@ -23,7 +23,7 @@ const getPostById = async (req, res, next) => {
     try {
         const {id} = req.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ error: "ID no válido", details: error.message});
+        return res.status(400).json({ error: "ID no válido"});
         }
 
         const post = await Posts.findById(id)
@@ -31,7 +31,7 @@ const getPostById = async (req, res, next) => {
         .populate("place", "name img")
         
         if (!post) {
-            return res.status(404).json({error: "No se encontró el post solicitado", details: error.message});
+            return res.status(404).json({error: "No se encontró el post solicitado"});
         }
 
         return res.status(200).json(post);
