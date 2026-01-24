@@ -6,6 +6,7 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'Places',
+    // para reutilización puedo poner folder: req.body.type === "place" ? "Places" : "Posts"
     allowedFormats: ['jpg', 'png', 'jpeg', 'gif', 'webp']
   },
 });

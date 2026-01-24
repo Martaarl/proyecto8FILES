@@ -3,7 +3,7 @@
 
 Aplicación ****backend**** desarrollada con ****Node.js****, ****Express**** y ****MongoDB Atlas****, que permite gestionar ****lugares (Places)**** y ****publicaciones (Posts)****.
 
-Incluye subida de archivos a ****Cloudinary****, relación entre colecciones, y un CRUD completo para ambas entidades.
+Incluye subida de archivos a ****Cloudinary****, relación entre colecciones, un CRUD completo para ambas entidades y autenticación de usuario con JWT.
 
 ---
 ## 🚀 Tecnologías utilizadas
@@ -25,7 +25,6 @@ Incluye subida de archivos a ****Cloudinary****, relación entre colecciones, y 
 ---
 ## 📁 Estructura del proyecto
 
-  
 
 ```
 
@@ -54,19 +53,18 @@ Incluye subida de archivos a ****Cloudinary****, relación entre colecciones, y 
 
 ```
 
-  
 
 ---
-
   
 
 ## 🧠 Descripción general
 
-El proyecto consiste en dos colecciones principales:
+El proyecto consiste en ***tres colecciones principales**:
 
-- ****Places**** → Lugares que pueden tener una imagen subida a Cloudinary.
+- **Places** → Lugares que pueden tener una imagen subida a Cloudinary.
 
-- ****Posts**** → Publicaciones que hacen referencia a un lugar (`place`) y pueden incluir también una imagen.
+- **Posts** → Publicaciones que hacen referencia a un lugar (`place`) y pueden incluir también una imagen.
+-**Users** → Usuarios con roles (`admin` o `user`) y favoritos.
 
 Cada colección tiene sus operaciones CRUD completas, validaciones y manejo de errores.
 
@@ -91,17 +89,28 @@ Cada colección tiene sus operaciones CRUD completas, validaciones y manejo de e
 |--------|------|--------------|---------------|------------|
 | GET | `/api/v1/posts` | Obtiene todos los posts | — | Array de posts |
 | GET | `/api/v1/posts/:id` | Obtiene un post por ID | `id` en params | Post con `place` poblado |
-| POST | `/api/v1/posts` | Crea un post | `title`, `content`, `place`, `image` (archivo) | Post creado |
-| PUT | `/api/v1/posts/:id` | Actualiza un post | Campos a actualizar y `image` (opcional) | Post actualizado |
+| POST | `/api/v1/posts` | Crea un post | `title`, `content`, `place`, `image` (archivo obligatorio) | Post creado |
+| PUT | `/api/v1/posts/:id` | Actualiza un post | Campos a actualizar y `image` (archivo opcional) | Post actualizado |
 | DELETE | `/api/v1/posts/:id` | Borra un post | `id` en params | Post eliminado + elimina imagen en Cloudinary |
 
+---
+
+### 🔐 **Users y autenticación**
+
+| Método | Ruta | Descripción | Body / Params | Respuesta |
+|--------|------|-------------|---------------|-----------|
+| POST | `/api/v1/users/register` | Registro de usuario | `userName`, `password` | Usuario creado |
+| POST | `/api/v1/users/login` | Login y obtención de JWT | `userName`, `password` | Token + info usuario |
+| GET | `/api/v1/users` | Obtiene todos los usuarios (solo admin) | — | Array de usuarios |
+| GET | `/api/v1/users/:userName` | Obtiene un usuario por nombre | `userName` | Usuario (si es admin o propio usuario) |
+| PUT | `/api/v1/users/:userName` | Actualiza rol, userName o password | Campos a actualizar | Usuario actualizado |
+| DELETE | `/api/v1/users/:userName` | Elimina usuario | `userName` | Usuario eliminado |
+
+**Middleware:** `isAuth` y `isAdmin` protegen rutas según permisos.
   
 ---
 
-
 ## ⚙️ Ejemplo de respuestas
-
-  
 
 ### ✅ ****Respuesta exitosa****
 
@@ -127,20 +136,26 @@ Cada colección tiene sus operaciones CRUD completas, validaciones y manejo de e
 ```
 ---
 
+## 🌱 Semilla (Seed Data)
+
+El archivo `seedData.js` inserta datos iniciales de **Places** y **Posts**.
+
+- Conecta a la base de datos
+- Inserta lugares y posts con `image: { url, public_id }`
+- Cierra la conexión automáticamente
+
+```bash
+node seeds/seedData.js
+```
+
+---
   
 ## ☁️ Subida y eliminación de archivos (Cloudinary)
 
-📤 Las imágenes se suben automáticamente a ****Cloudinary**** usando ****Multer**** y ****CloudinaryStorage****.
-
-📁 Estructura de carpetas en Cloudinary:
-
-- `/Places` → para las imágenes de lugares
-
-- `/Posts` → para las imágenes de publicaciones
-
-🗑 Al eliminar un ****Place****, también se borra su imagen correspondiente de Cloudinary.
-
-*_(En Posts es opcional, pero fácilmente ampliable con el mismo patrón.)_*
+- Subida automática usando Multer + CloudinaryStorage
+- Carpetas: `/Places` y `/Posts`
+- Al eliminar un Place o Post, si existe `image.public_id`, se elimina de Cloudinary automáticamente
+- Storage reutilizable cambiando solo la carpeta
 
 ---
 
@@ -165,29 +180,6 @@ Ejemplo de respuesta de un post:
 }
 
 ```
----
-
-## 🌱 Semilla (Seed Data)
-
-El archivo `seedData.js` inserta datos iniciales de ****Places**** y ****Posts**** en la base de datos.
-
-Ejecuta:
-
-```bash
-
-node seeds/seedData.js
-
-```  
-
-Esto:
-
-- Conecta a tu base de datos Mongo Atlas
-
-- Crea algunos lugares por defecto
-
-- Inserta posts asociados a esos lugares
-
-- Cierra la conexión automáticamente
 
 ---
 
@@ -196,6 +188,7 @@ Esto:
   | Código | Tipo de error | Cuándo ocurre | Ejemplo de respuesta |
 |--------|----------------|----------------|------------------------|
 | 400 | **Bad Request** | Faltan campos obligatorios o datos inválidos | `{ "error": "Faltan campos obligatorios" }` |
+| 403 | Forbidden | Usuario no tiene permisos | `{ "error": "No tienes permisos" }` 
 | 404 | **Not Found** | El recurso solicitado no existe en la base de datos | `{ "error": "No se encontró el lugar solicitado" }` |
 | 500 | **Internal Server Error** | Error inesperado del servidor (por ejemplo, fallo de conexión o bug interno) | `{ "error": "Error interno del servidor", "details": "ValidationError: 'name' es obligatorio" }` |
 
@@ -251,4 +244,4 @@ npm run dev
 
 Proyecto desarrollado por ****Marta Ramírez Linares****
 
-💻 GitHub: [https://github.com/Martaarl](https://github.com/tu-usuario)
+💻 GitHub: [https://github.com/Martaarl](https://github.com/Martaarl)

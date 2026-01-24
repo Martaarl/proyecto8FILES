@@ -9,22 +9,18 @@ const lookForUser = async (userName) => {
     const user = await User.findOne({userName});
 
     if (!user) {
-        return res.status(404).json("No se encuentra a este usuario")
+        return null
     }
-
-  //  user.password = undefined;
+    
+    user.password = undefined;
     return user;
 }
 
 const getUsers = async (req, res, next) => {
     try {
-        const users = await User.find();
-
-      /*  users.forEach(user =>{
-            user.password = undefined;
-        })*/
-
+        const users = await User.find().select("-password");
         return res.status(200).json(users);
+
     } catch (error) {
         return res.status(500).json({error: "Error obteniendo usuarios", details: error.message});
     }
@@ -34,7 +30,7 @@ const getUserByName = async (req, res, next) => {
     try {
         
         const {userName} = req.params;
-        const user = await User.findOne({userName});
+        const user = await User.findOne({userName}).select("-password");
 
         if (!user) {
             return res.status(404).json("Usuario no encontrado");
@@ -44,12 +40,10 @@ const getUserByName = async (req, res, next) => {
             return res.status(403).json({message: "No tienes permisos para ver este usuario"})
         }
 
-        user.password = undefined;
-
         return res.status(200).json(user);
 
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el usuario", details: error.message})
+        return res.status(500).json({error: "Error obteniendo el usuario", details: error.message})
     }
 }
 
@@ -58,11 +52,11 @@ const updateUser = async (req, res, next) => {
         const {userName} = req.params;
         const {rol, newUserName, password} = req.body;
 
-        const user = await User.findOne({userName});
+        const user = await User.findOne({userName}).select("+password");
         if (!user) {
             return res.status(404).json("Usuario no encontrado")
         };
-/*
+
         if (rol) {
              if (req.user.rol !== "admin") {
             return res.status(403).json("Solo un admin puede cambiar roles")
@@ -71,7 +65,6 @@ const updateUser = async (req, res, next) => {
             if (!["user", "admin"].includes(rol)) {
                 return res.status(400).json({error: "Rol no válido"})
             }
-
             user.rol = rol;
         }
 
@@ -90,12 +83,10 @@ const updateUser = async (req, res, next) => {
         if (password) {
             if (req.user.userName !== userName) {
                 return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña", details: error.message})
-            }
-
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
+            };
+            user.password = password;
         }
-*/
+
         await user.save();
 
         const userToShow = {
@@ -113,17 +104,24 @@ const updateUser = async (req, res, next) => {
 
 const register = async (req, res, next) => {
     try {
+        const {userName, password} = req.body;
+
+        if (!userName || !password) {
+            return res.status(400).json({error: "Faltan campos obligatorios"})
+        }
+        
+        const duplicateUser = await User.findOne({userName});
+        
+        if (duplicateUser) {
+            return res.status(400).json("Este usuario ya existe");
+        }
+
         const newUser  = new User({
             userName: req.body.userName,
             password: req.body.password, 
             rol: "user"
         });
-        const duplicateUser = await lookForUser(req.body.userName);
-        
-        if (duplicateUser) {
-            return res.status(400).json("Este usuario ya existe");
-        }
-        
+
         const userSaved = await newUser.save();
 
         const userShowed = {
@@ -140,22 +138,32 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
     try {
-        const user = await User.findOne({userName: req.body.userName});
+        const {userName, password} = req.body;
+
+        if (!userName || !password) {
+            return res.status(400).json({error: "Faltan permisos"})
+        }
+
+        const user = await User.findOne({userName}).select("+passsword");
 
         if (!user) {
-            return res.status(400).json("Usuario no existente")
+            return res.status(400).json("Usuario o contraseñas incorrectos")
         } 
-        if (bcrypt.compareSync(req.body.password, user.password)) {
-            const token = generateSign(user.id);
 
-            const userToReturn = {
-                _id: user._id,
-                userName: user.userName,
-                rol: user.rol
-            }
+        const userCheck = bcrypt.compareSync(password, user.password);
+        if (!userCheck) {
+            return res.status(400).json({error: "Usuario o contraseña incorrectos"})
+        }
 
-            return res.status(200).json({userToReturn, token});
-        } 
+        const token = generateSign(user._id);
+
+        const userToReturn = {
+            _id: user._id,
+            userName: user.userName,
+            rol: user.rol
+        }
+
+        return res.status(200).json({userToReturn, token});
         
     } catch (error) {
          return res.status(500).json({error: "Error logeando", details: error.message});
@@ -165,22 +173,20 @@ const login = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
     try {
-
         const {userName} = req.params;
-        const user = await User.findOne({userName});
-        if (!user) {
-            return res.status(400).json("No se encuentra al usuario")
+        const deleteUser = await User.findOneAndDelete({userName});
+        if (!deleteUser) {
+            return res.status(404).json({error: "No se encuentra el usuario"})
         }
 
         if(req.user.rol !=="admin" && req.user.userName !== userName){
             return res.status(403).json("No tienes permisos para eliminar a este usuario")
         }
 
-        await User.deleteOne({userName})
-        return res.status(200).json({message: "Usuario eliminado correctamente"})
+        return res.status(200).json({message: "Usuario eliminado correctamente"});
     } catch (error) {
         res.status(500).json({error:"Error al eliminar el usuario", details: error.message})
     }
 }
 
-module.exports = {getUsers, getUserByName, updateUser, register, login, deleteUser};
+module.exports = {getUsers, getUserByName, updateUser, register, login, deleteUser, lookForUser};

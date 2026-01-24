@@ -1,6 +1,4 @@
 const cloudinary = require("cloudinary").v2;
-//const CloudinaryStorage = require("multer-storage-cloudinary");
-//const multer = require ("multer");
 const mongoose = require("mongoose");
 const Posts = require("../models/posts");
 const Place = require("../models/places");
@@ -10,9 +8,8 @@ const getPosts = async (req, res, next) => {
         const posts =  await Posts.find();
 
         if (posts.length === 0) {
-            return res.status(200).json(posts)
+            return res.status(200).json({message: "todavía no hay posts", data: []})
         }
-
         return res.status(200).json(posts)
     } catch (error) {
         return res.status(500).json({error: "Error obteniendo posts", details: error.message})
@@ -22,12 +19,12 @@ const getPosts = async (req, res, next) => {
 const getPostById = async (req, res, next) => {
     try {
         const {id} = req.params;
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ error: "ID no válido"});
         }
 
         const post = await Posts.findById(id)
-        //.populate("author", "name")
         .populate("place", "name img")
         
         if (!post) {
@@ -35,6 +32,7 @@ const getPostById = async (req, res, next) => {
         }
 
         return res.status(200).json(post);
+
     } catch (error) {
         return res.status(500).json({error: "Error al obtener este post", details: error.message})
     }
@@ -43,10 +41,14 @@ const getPostById = async (req, res, next) => {
 const createPost = async (req, res, next) => {
     try {
     
-    const {title, content,/* author,*/ place} = req.body;
+    const {title, content, author, place} = req.body;
 
-    if (!title || !content || /*!author ||*/ !place) {
+    if (!title || !content || !author || !place) {
         return res.status(400).json({error: "Faltan campos obligatorios"})
+    }
+
+    if (!req.file) {
+        return res.status(400).json({error: "La imagen es obligatoria"})
     }
 
     const placeExists = await Place.findById(place);
@@ -56,11 +58,15 @@ const createPost = async (req, res, next) => {
 
     const newPost = new Posts({
         ...req.body, 
-        image: req.file ? req.file.path : null
+        image: {
+            url: req.file.path, 
+            public_id: req.file.filename
+        }
     })
 
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
+
      } catch (error) {
         console.log(error);
         return res.status(500).json({error: "Error creando el post", details: error.message});
@@ -71,9 +77,11 @@ const updatePost = async (req, res, next) => {
     try {
         
         const {id} = req.params;
-         if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ error: "ID no válido", details: error.message});
+        
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "ID no válido"});
         }
+
         const updateData = {...req.body};
       
         if (req.file) {
@@ -97,14 +105,19 @@ const updatePost = async (req, res, next) => {
 const deletePost = async (req, res, next) => {
     try {
         const {id} = req.params;
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ error: "ID no válido", details: error.message});
+        return res.status(400).json({ error: "ID no válido"});
         }
 
         const deletedPost = await Posts.findByIdAndDelete(id);
 
         if (!deletedPost) {
             return res.status(404).json({error: "No se encontró el post que intentas eliminar"})
+        }
+
+        if (deletedPost.image?.public_id) {
+            await cloudinary.uploader.destroy(deletedPost.image.public_id)
         }
         return res.status(200).json({message: "Post eliminado con éxito"})
     } catch (error) {

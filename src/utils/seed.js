@@ -54,11 +54,10 @@ const seedData = async () => {
             const newPost = {
                 title: post.title,
                 content: post.content,
-                image: post.image,
+                image: {url: post.imageUrl, public_id: "asturias1"},
                 place: place._id,
                 author: new mongoose.Types.ObjectId()
             }
-            //mongo no es capaz de añadir aquí abajo nada al esquema?
             await Posts.create(newPost);
         }
         
