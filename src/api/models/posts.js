@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-const placesRouter = require("../routes/places");
-const { type } = require("os");
 
 const postSchema = new mongoose.Schema({
     title: {type: String, required: true},

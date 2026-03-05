@@ -1,15 +1,23 @@
 const multer = require('multer')
-const cloudinary = require('cloudinary').v2
+const cloudinary = require("../utils/cloudinary")
 const { CloudinaryStorage } = require('multer-storage-cloudinary')
 
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'Places',
-    // para reutilización puedo poner folder: req.body.type === "place" ? "Places" : "Posts"
-    allowedFormats: ['jpg', 'png', 'jpeg', 'gif', 'webp']
-  },
-});
+    allowedFormats: ['jpg', 'png', 'jpeg', 'gif', 'webp']}
+
+    // para reutilización puedo poner folder: 
+    /* 
+    params: async (req, file) => {
+      return {
+      folder: req.body.type === "place" ? "Places" : "Posts",
+      allowedFormats: ['jpg', 'png', 'jpeg', 'gif', 'webp']
+  };
+  }
+  */
+ });
 
 
 const upload = multer({ storage });

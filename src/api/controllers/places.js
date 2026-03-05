@@ -1,7 +1,7 @@
-const { error } = require("console");
+
 const Place = require("../models/places");
 const mongoose = require("mongoose");
-const cloudinary = require("cloudinary").v2;
+const cloudinary = require("../../utils/cloudinary");
 
 
 const getPlaces = async (req, res, next) => {
@@ -9,12 +9,12 @@ const getPlaces = async (req, res, next) => {
         const places = await Place.find();
 
         if(places.length === 0) {
-            return res.status(404).json({error:"No se encuentran estos sitios"})
+            return res.status(200).json({message:"No hay lugares todavía"})
         }
         return res.status(200).json(places);
       
     } catch (error) {
-        return res.status(500).json({error:"Error buscando sitios", details: error.message})
+        return res.status(500).json({error:"Error interno del servidor"})
     }
 }
 
@@ -35,14 +35,16 @@ const getPlacesById = async (req, res, next) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(500).json({error:"Error obteniendo el lugar", details: error.message})
+        return res.status(500).json({error:"Error interno del servidor"})
     }
 }
 
 const postPlaces = async(req, res, next) =>{
     try {
         const newPlace = new Place({
-            ...req.body, 
+            name: req.body.name, 
+            date: req.body.date,
+            author: req.user._id,
             img: req.file ? {url: req.file.path, public_id: req.file.filename} : undefined
         });
         
@@ -56,8 +58,7 @@ const postPlaces = async(req, res, next) =>{
         return res.status(201).json(placeSaved);
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Error publicando un nuevo lugar", details: error.message });
+        return res.status(500).json({ error: "Error interno del servidor"});
         }
     }
 
@@ -66,52 +67,56 @@ const putPlaces = async (req, res, next) => {
     const {id} = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ error: "ID no válido", details: error.message});
+    return res.status(400).json({ error: "ID no válido"});
     };
 
-    const updateData = {...req.body};
+    const place = await Place.findById(id);
+    if (!place) {
+        return res.status(404).json({error: "No se encontró el lugar buscado"})
+    }
+
+    const updateData = {
+        name: req.body.name, 
+        date: req.body.date
+    };
 
     if (req.file) {
-     updateData.img = {url: req.file.path, public_id: req.file.filename}
+        if (place.img?.public_id) {await cloudinary.uploader.destroy(place.img.public_id)}
+        updateData.img = {url: req.file.path, public_id: req.file.filename}
     }
 
     const updatedPlace = await Place.findByIdAndUpdate(id, updateData, {new: true, runValidators: true});
     if (!updatedPlace) {
-        return res.status(404).json({error: "No se encontró el lugar buscado", details: error.message})
+        return res.status(404).json({error: "No se encontró el lugar buscado"})
     }
 
     return res.status(200).json(updatedPlace);
 
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({error: "Error actualizando el lugar", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
 const deletePlace = async(req, res, next) => {
     try {
         const {id} = req.params;
-        //preguntar por la validación que hace Santi
+        
         if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "ID no válido" });}
         
         const placesDeleted = await Place.findByIdAndDelete(id);
 
         if (!placesDeleted) {
-            return res.status(404).json("No se encuentra este lugar para borrarlo");
+            return res.status(404).json({error:"No se encuentra este lugar para borrarlo"});
         };
 
          if (placesDeleted.img?.public_id) {
-            try {
-                const result = await cloudinary.uploader.destroy(placesDeleted.img.public_id)
-            } catch (error) {
-                return res.status(500).json({error: "Error eliminando imagen en Cloudinary:", details: error.message});
-            }
+         await cloudinary.uploader.destroy(placesDeleted.img.public_id)
          }
         return res.status(200).json(placesDeleted);
 
     } catch (error) {
-        return res.status(500).json({error: "Error eliminando el lugar", details: error.message});
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 

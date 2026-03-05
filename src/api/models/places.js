@@ -8,6 +8,10 @@ const placesSchema = new mongoose.Schema({
     name: {type: String, required: true}, 
     date: {type: Date}, 
     author: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true},
+    verified: {
+        type: Boolean, 
+        default: false
+    }
 },
 {
     timestamps: true, 

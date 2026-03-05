@@ -146,7 +146,7 @@ const login = async (req, res, next) => {
         const user = await User.findOne({userName}).select("+password");
 
         if (!user) {
-            return res.status(400).json({error:"Usuario o contraseñas incorrectos"})
+            return res.status(400).json({error:"Usuario o contraseña incorrectos"})
         } 
 
         const userCheck = bcrypt.compareSync(password, user.password);
@@ -174,15 +174,16 @@ const deleteUser = async (req, res, next) => {
     try {
         const {userName} = req.params;
 
+        const user = await User.findOne({userName});
+        if (!user) {
+            return res.status(404).json({error: "No se encuentra al usuario"})
+        }
+
         if(req.user.rol !=="admin" && req.user.userName !== userName){
             return res.status(403).json({error: "No tienes permisos para eliminar a este usuario"})
         }
 
-        const deleteUser = await User.findOneAndDelete({userName});
-        if (!deleteUser) {
-            return res.status(404).json({error: "No se encuentra el usuario"})
-        }
-
+        await User.deleteOne({userName});
 
         return res.status(200).json({message: "Usuario eliminado correctamente"});
     } catch (error) {

@@ -1,18 +1,20 @@
-const cloudinary = require("cloudinary").v2;
+const cloudinary = require("../../utils/cloudinary");
 const mongoose = require("mongoose");
 const Posts = require("../models/posts");
 const Place = require("../models/places");
 
 const getPosts = async (req, res, next) => {
     try {
-        const posts =  await Posts.find();
+        const posts =  await Posts.find()
+        .populate("author", "userName")
+        .populate("place", "name img");
 
         if (posts.length === 0) {
             return res.status(200).json({message: "todavía no hay posts", data: []})
         }
         return res.status(200).json(posts)
     } catch (error) {
-        return res.status(500).json({error: "Error obteniendo posts", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
@@ -34,16 +36,16 @@ const getPostById = async (req, res, next) => {
         return res.status(200).json(post);
 
     } catch (error) {
-        return res.status(500).json({error: "Error al obtener este post", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
 const createPost = async (req, res, next) => {
     try {
     
-    const {title, content, author, place} = req.body;
+    const {title, content, place} = req.body;
 
-    if (!title || !content || !author || !place) {
+    if (!title || !content || !place) {
         return res.status(400).json({error: "Faltan campos obligatorios"})
     }
 
@@ -57,7 +59,10 @@ const createPost = async (req, res, next) => {
     }
 
     const newPost = new Posts({
-        ...req.body, 
+        title,
+        content,
+        author: req.user._id, 
+        place,
         image: {
             url: req.file.path, 
             public_id: req.file.filename
@@ -68,7 +73,6 @@ const createPost = async (req, res, next) => {
     res.status(201).json(savedPost);
 
      } catch (error) {
-        console.log(error);
         return res.status(500).json({error: "Error interno del servidor"});
     }
 }
@@ -82,12 +86,26 @@ const updatePost = async (req, res, next) => {
         return res.status(400).json({ error: "ID no válido"});
         }
 
-        const updateData = {...req.body};
+        const post = await Posts.findById(id);
+        if (!post) {
+            return res.status(404).json({error: "No se encontró el post buscado"})
+        }
+        const updateData = {
+            title: req.body.title,
+            content: req.body.content,
+            place: req.body.place
+        };
       
         if (req.file) {
-            console.log("Archivo recibido:", req.file);
 
-            updateData.image = req.file.path;
+            if (post.image?.public_id) {
+                await cloudinary.uploader.destroy(post.image.public_id)
+            }
+
+            updateData.image = {
+               url: req.file.path,
+               public_id: req.file.filename
+            };
         }
        const updatedPost = await Posts.findByIdAndUpdate(id, updateData, {new: true, runValidators: true});
 
@@ -110,19 +128,22 @@ const deletePost = async (req, res, next) => {
         return res.status(400).json({ error: "ID no válido"});
         }
 
-        const deletedPost = await Posts.findByIdAndDelete(id);
+        const post = await Posts.findById(id);
+        if(!post) {return res.status(404).json({error: "No se encontró el post que intentas eliminar"})}
 
-        if (!deletedPost) {
-            return res.status(404).json({error: "No se encontró el post que intentas eliminar"})
+        if (req.user.rol !== "admin" && post.author.toString() !== req.user._id) {
+            return res.status(403).json({error: "No tienes permisos para eliminar este usuario"})
         }
 
-        if (deletedPost.image?.public_id) {
-            await cloudinary.uploader.destroy(deletedPost.image.public_id)
+        if (post.image?.public_id) {
+            await cloudinary.uploader.destroy(post.image.public_id)
         }
+
+        await Posts.findByIdAndDelete(id);
+
         return res.status(200).json({message: "Post eliminado con éxito"})
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({error: "Error al eliminar el post", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 

@@ -5,7 +5,7 @@ const usersRouter = require("express").Router();
 
 usersRouter.get("/", [isAuth , isAdmin], getUsers);
 usersRouter.get("/:userName", [isAuth], getUserByName);
-usersRouter.put("/:userName", [isAuth, isAdmin], updateUser)
+usersRouter.put("/:userName", isAuth, updateUser)
 usersRouter.post("/register", register);
 usersRouter.post("/login", login);
 

@@ -22,6 +22,10 @@ Incluye subida de archivos a ****Cloudinary****, relación entre colecciones, un
 
 - 🔒 ****Dotenv****
 
+- 🔐 ****JWT (jsonwebtoken)****
+
+- 🔑 ****bcrypt****
+
 ---
 ## 📁 Estructura del proyecto
 
@@ -35,12 +39,12 @@ Incluye subida de archivos a ****Cloudinary****, relación entre colecciones, un
 │ ├── models
 │ └── routes
 
-├── middleware
-|	├── auth.js
+├── middlewares
+| ├── auth.js
 │ └── multer.js
 
 ├── utils
-| ├── deleteFile.js
+| ├── cloudinary.js
 │ └── seed.js
 
 ├── config
@@ -109,6 +113,15 @@ Cada colección tiene sus operaciones CRUD completas, validaciones y manejo de e
 **Middleware:** `isAuth` y `isAdmin` protegen rutas según permisos.
   
 ---
+
+## 🔐 Autenticación
+
+Las rutas protegidas requieren un token JWT enviado en la cabecera:
+
+Authorization: Bearer TOKEN
+
+---
+
 
 ## ⚙️ Ejemplo de respuestas
 
@@ -190,11 +203,11 @@ Ejemplo de respuesta de un post:
 | 400 | **Bad Request** | Faltan campos obligatorios o datos inválidos | `{ "error": "Faltan campos obligatorios" }` |
 | 403 | Forbidden | Usuario no tiene permisos | `{ "error": "No tienes permisos" }` 
 | 404 | **Not Found** | El recurso solicitado no existe en la base de datos | `{ "error": "No se encontró el lugar solicitado" }` |
-| 500 | **Internal Server Error** | Error inesperado del servidor (por ejemplo, fallo de conexión o bug interno) | `{ "error": "Error interno del servidor", "details": "ValidationError: 'name' es obligatorio" }` |
+| 500 | **Internal Server Error** | Error inesperado del servidor (por ejemplo, fallo de conexión o bug interno) | `{ "error": "Error interno del servidor"}` |
 
 
 
-Todos los controladores devuelven errores detallados con el campo `details` para facilitar el debugging.
+Todos los controladores devuelven errores estandarizados  para evitar exponer información sensible.
 
 ---
 
@@ -206,7 +219,7 @@ npm install
 ```
 2. Crea un archivo `.env` en la raíz con tus variables:
 ```
-PORT=5000
+PORT=3000
 DB_URL=tu_url_de_mongo_atlas
 CLOUDINARY_CLOUD_NAME=tu_nombre
 CLOUDINARY_API_KEY=tu_api_key
@@ -226,7 +239,7 @@ npm run dev
 
 ✅ Conexión a Mongo Atlas con Mongoose
 
-✅ Dos modelos: `Place` y `Post`
+✅ Tres modelos: `Place` , `Post` y `User`
 
 ✅ Relación entre colecciones
 
