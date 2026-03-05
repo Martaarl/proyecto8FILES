@@ -1,5 +1,4 @@
 
-const { error } = require("console");
 const { generateSign } = require("../../config/jwt.js");
 const User = require("../models/users.js");
 const bcrypt = require("bcrypt");
@@ -22,7 +21,7 @@ const getUsers = async (req, res, next) => {
         return res.status(200).json(users);
 
     } catch (error) {
-        return res.status(500).json({error: "Error obteniendo usuarios", details: error.message});
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -33,17 +32,17 @@ const getUserByName = async (req, res, next) => {
         const user = await User.findOne({userName}).select("-password");
 
         if (!user) {
-            return res.status(404).json("Usuario no encontrado");
+            return res.status(404).json({error:"Usuario no encontrado"});
         }
 
         if (req.user.rol !== "admin" && req.user.userName !== userName) {
-            return res.status(403).json({message: "No tienes permisos para ver este usuario"})
+            return res.status(403).json({error: "No tienes permisos para ver este usuario"})
         }
 
         return res.status(200).json(user);
 
     } catch (error) {
-        return res.status(500).json({error: "Error obteniendo el usuario", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
@@ -54,12 +53,12 @@ const updateUser = async (req, res, next) => {
 
         const user = await User.findOne({userName}).select("+password");
         if (!user) {
-            return res.status(404).json("Usuario no encontrado")
+            return res.status(404).json({error:"Usuario no encontrado"})
         };
 
         if (rol) {
              if (req.user.rol !== "admin") {
-            return res.status(403).json("Solo un admin puede cambiar roles")
+            return res.status(403).json({error:"Solo un admin puede cambiar roles"})
                 }
 
             if (!["user", "admin"].includes(rol)) {
@@ -75,14 +74,14 @@ const updateUser = async (req, res, next) => {
             }
             const existName = await User.findOne({userName: newUserName});
             if (existName) {
-                return res.status(400).json({error: "Ya existe este usuario", details: error.message})
+                return res.status(400).json({error: "Ya existe este usuario"})
             }
             user.userName = newUserName;
         }
 
         if (password) {
             if (req.user.userName !== userName) {
-                return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña", details: error.message})
+                return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña"})
             };
             user.password = password;
         }
@@ -95,10 +94,10 @@ const updateUser = async (req, res, next) => {
             rol: user.rol
         }
 
-        return res.status(200).json({message: "Rol actualizado", userToShow})
+        return res.status(200).json({message: "Usuario actualizado", userToShow})
 
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el rol del usuario", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
@@ -113,12 +112,12 @@ const register = async (req, res, next) => {
         const duplicateUser = await User.findOne({userName});
         
         if (duplicateUser) {
-            return res.status(400).json("Este usuario ya existe");
+            return res.status(400).json({error:"Este usuario ya existe"});
         }
 
         const newUser  = new User({
-            userName: req.body.userName,
-            password: req.body.password, 
+            userName,
+            password, 
             rol: "user"
         });
 
@@ -132,7 +131,7 @@ const register = async (req, res, next) => {
         return res.status(201).json(userShowed);
 
     } catch (error) {
-         return res.status(500).json({error: "Error registrando el usuario", details: error.message});
+         return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -144,10 +143,10 @@ const login = async (req, res, next) => {
             return res.status(400).json({error: "Faltan permisos"})
         }
 
-        const user = await User.findOne({userName}).select("+passsword");
+        const user = await User.findOne({userName}).select("+password");
 
         if (!user) {
-            return res.status(400).json("Usuario o contraseñas incorrectos")
+            return res.status(400).json({error:"Usuario o contraseñas incorrectos"})
         } 
 
         const userCheck = bcrypt.compareSync(password, user.password);
@@ -166,7 +165,7 @@ const login = async (req, res, next) => {
         return res.status(200).json({userToReturn, token});
         
     } catch (error) {
-         return res.status(500).json({error: "Error logeando", details: error.message});
+         return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -174,18 +173,20 @@ const login = async (req, res, next) => {
 const deleteUser = async (req, res, next) => {
     try {
         const {userName} = req.params;
+
+        if(req.user.rol !=="admin" && req.user.userName !== userName){
+            return res.status(403).json({error: "No tienes permisos para eliminar a este usuario"})
+        }
+
         const deleteUser = await User.findOneAndDelete({userName});
         if (!deleteUser) {
             return res.status(404).json({error: "No se encuentra el usuario"})
         }
 
-        if(req.user.rol !=="admin" && req.user.userName !== userName){
-            return res.status(403).json("No tienes permisos para eliminar a este usuario")
-        }
 
         return res.status(200).json({message: "Usuario eliminado correctamente"});
     } catch (error) {
-        res.status(500).json({error:"Error al eliminar el usuario", details: error.message})
+        res.status(500).json({error:"Error interno del servidor"})
     }
 }
 

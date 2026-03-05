@@ -69,7 +69,7 @@ const createPost = async (req, res, next) => {
 
      } catch (error) {
         console.log(error);
-        return res.status(500).json({error: "Error creando el post", details: error.message});
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -98,7 +98,7 @@ const updatePost = async (req, res, next) => {
        return res.status(200).json(updatedPost);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({error: "Error al actualizar el post", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 

@@ -22,12 +22,12 @@ const postData = [
     {
         title: "Descubriendo Asturias",
         content: "Un post sobre la belleza de Asturias",
-        image: "https://example.com/post-asturias.jpg", 
+        image: {url: "https://example.com/post-asturias.jpg", public_id: "post-asturias"}, 
         placeName: "Asturias"
     }, {
         title: "Un paseo por Nueva York", 
         content: "Post sobre calle y sitios NO típicos de Nueva York", 
-        image: "https://example.com/post-nuevayork.jpg",
+        image: {url: "https://example.com/post-nuevayork.jpg", public_id: "post-nuevayork"},
         placeName: "Nueva York"
     }
 ]
@@ -54,7 +54,7 @@ const seedData = async () => {
             const newPost = {
                 title: post.title,
                 content: post.content,
-                image: {url: post.imageUrl, public_id: "asturias1"},
+                image: post.image,
                 place: place._id,
                 author: new mongoose.Types.ObjectId()
             }
