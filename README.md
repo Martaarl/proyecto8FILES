@@ -68,7 +68,7 @@ El proyecto consiste en ***tres colecciones principales**:
 - **Places** → Lugares que pueden tener una imagen subida a Cloudinary.
 
 - **Posts** → Publicaciones que hacen referencia a un lugar (`place`) y pueden incluir también una imagen.
--**Users** → Usuarios con roles (`admin` o `user`) y favoritos.
+-**Users** → Usuarios con roles (`admin` o `user`) y autenticación con JWT.
 
 Cada colección tiene sus operaciones CRUD completas, validaciones y manejo de errores.
 
@@ -151,14 +151,14 @@ Authorization: Bearer TOKEN
 
 ## 🌱 Semilla (Seed Data)
 
-El archivo `seedData.js` inserta datos iniciales de **Places** y **Posts**.
+El archivo `seed.js` inserta datos iniciales de **Places** y **Posts**.
 
 - Conecta a la base de datos
 - Inserta lugares y posts con `image: { url, public_id }`
 - Cierra la conexión automáticamente
 
 ```bash
-node seeds/seedData.js
+npm run seed
 ```
 
 ---
@@ -167,7 +167,7 @@ node seeds/seedData.js
 
 - Subida automática usando Multer + CloudinaryStorage
 - Carpetas: `/Places` y `/Posts`
-- Al eliminar un Place o Post, si existe `image.public_id`, se elimina de Cloudinary automáticamente
+- Al eliminar un Place o Post, si existe `public_id`, se elimina de Cloudinary automáticamente
 - Storage reutilizable cambiando solo la carpeta
 
 ---
@@ -243,7 +243,7 @@ npm run dev
 
 ✅ Relación entre colecciones
 
-✅ CRUD completo para ambas
+✅ CRUD completo para las colecciones principales
 
 ✅ Subida y eliminación de archivos en Cloudinary
 

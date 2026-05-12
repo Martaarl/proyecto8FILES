@@ -70,6 +70,7 @@ const createPost = async (req, res, next) => {
     })
 
     const savedPost = await newPost.save();
+
     res.status(201).json(savedPost);
 
      } catch (error) {
@@ -131,8 +132,8 @@ const deletePost = async (req, res, next) => {
         const post = await Posts.findById(id);
         if(!post) {return res.status(404).json({error: "No se encontró el post que intentas eliminar"})}
 
-        if (req.user.rol !== "admin" && post.author.toString() !== req.user._id) {
-            return res.status(403).json({error: "No tienes permisos para eliminar este usuario"})
+        if (req.user.rol !== "admin" && post.author.toString() !== req.user._id.toString()) {
+            return res.status(403).json({error: "No tienes permisos para eliminar este post"})
         }
 
         if (post.image?.public_id) {

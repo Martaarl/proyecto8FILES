@@ -2,19 +2,30 @@ require ("dotenv").config();
 const mongoose = require("mongoose");
 const Place = require("../api/models/places");
 const Posts = require("../api/models/posts");
+const User = require("../api/models/users");
 
+
+const userData = [
+    {
+        userName: "marta",
+        password: "123456"
+    },
+    {
+        userName: "admin",
+        password: "123456",
+        rol: "admin"
+    }
+]
 const placeData = [
     {
         name: "Asturias",
         date: new Date(),
-        img: {url: "https://example.com/asturias.jpg", public_id: "asturias1"},
-        author: new mongoose.Types.ObjectId()
+        img: {url: "https://example.com/asturias.jpg", public_id: "asturias1"}
     }, 
     {
         name: "Nueva York",
         date: new Date(),
-        img: {url: "https://example.com/nuevayork.jpg", public_id: "nuevayork1"},
-        author: new mongoose.Types.ObjectId()
+        img: {url: "https://example.com/nuevayork.jpg", public_id: "nuevayork1"}
     }
 ]
 
@@ -36,10 +47,15 @@ const seedData = async () => {
     try {
         await mongoose.connect(process.env.DB_URL);
 
+        const users = await User.insertMany(userData);
+
         for (const place of placeData) {
             const existsPlace = await Place.findOne({name: place.name});
             if (!existsPlace) {
-                await Place.create(place);
+                await Place.create({
+                ...place,
+                author: users [0]._id    
+            });
             } else {
                 console.log(`El lugar "${place.name}" ya existe`)
             }
@@ -56,8 +72,9 @@ const seedData = async () => {
                 content: post.content,
                 image: post.image,
                 place: place._id,
-                author: new mongoose.Types.ObjectId()
+                author: users[0]._id
             }
+
             await Posts.create(newPost);
         }
         

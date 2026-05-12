@@ -1,5 +1,7 @@
 
 const { generateSign } = require("../../config/jwt.js");
+const Place = require("../models/places.js");
+const Posts = require("../models/posts.js");
 const User = require("../models/users.js");
 const bcrypt = require("bcrypt");
 
@@ -70,7 +72,7 @@ const updateUser = async (req, res, next) => {
 
         if (newUserName){
             if (req.user.rol !== "admin" && req.user.userName !== userName) {
-                return res.status(403).json("No tienes permiso para cambiar este usuario")
+                return res.status(403).json({error: "No tienes permiso para cambiar este usuario"});
             }
             const existName = await User.findOne({userName: newUserName});
             if (existName) {
@@ -182,6 +184,10 @@ const deleteUser = async (req, res, next) => {
         if(req.user.rol !=="admin" && req.user.userName !== userName){
             return res.status(403).json({error: "No tienes permisos para eliminar a este usuario"})
         }
+
+        await Posts.deleteMany({author: user._id});
+
+        await Place.deleteMany({author: user._id});
 
         await User.deleteOne({userName});
 

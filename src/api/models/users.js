@@ -9,8 +9,7 @@ const usersSchema = new mongoose.Schema({
         required: true, 
         enum: ["admin", "user"], 
         default: "user",
-    }, 
-    favoritePlaces: [{ type: mongoose.Types.ObjectId, ref: "Place", default: []}]
+    }
 }, {
     timestamps: true, 
     collection: "users"
